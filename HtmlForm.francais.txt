@@ -1,0 +1,963 @@
+*HtmlForm.francais.txt*	                                           HtmlForm 1.0
+
+HtmlForm - mini framework PHP5 pour formulaire HTML.
+
+Il permet d'automatiser les opérations répétitives sur les formulaires HTML :
+- affichage des champs du formulaire,
+- reprise des entrées utilisateur dans les champs,
+- affichage des messages d'erreur.
+
+En plus de ces fonctions utilisateurs, HtmlForm propose des outils pour
+les développeurs :
+- écriture de test sur les valeurs des champs,
+- protection des valeurs par défaut et des entrées utilisateurs,
+- création des portions de requête SQL,
+- extension des classes de champs spécifiques,
+- utilisation d'un moteur de template.
+
+|Exemple|		    Un exemple simple pour commencer.
+|Syntaxe-globale|	    Explication et démonstration de la syntaxe.
+
+|Nom-de-champ|              Modifier le nom du champ.
+|Label-de-champ|	    Modifier le label d'un champ.
+|Champ-obligatoire|	    Rendre un champ obligatoire.
+|Verification-des-valeurs|  Ajouter des tests sur les valeurs.
+|Message-d-alerte|          Définir les messages d'erreurs liées aux champs.
+|Nom-exportable|            Modifier la correspondance SQL.
+|Valeurs-predefinies|       Ajoute ou modifie les valeurs prédéfinies.
+|Table-de-traduction|       Choisir une table de traduction.
+|Valeur-par-defaut|         Ajoute une valeur par défaut.
+|Champ-Cache|               Permet de masquer le champ.
+|Valeur-client|		    La valeur envoyé par le client.
+
+|Formulaire-valide|         Actions réalisées si le formulaire est valide.
+|Multi-Pages|               Un formulaire sur plusieurs pages.
+
+|Type-de-champ|             Les types de champs disponibles de base.
+
+|Decorateur|                Afficher un formulaire.
+|Smarty|                    Utiliser Smarty pour afficher le formulaire.
+
+|Parametre-du-formulaire|   Les méthodes et propriétés du formulaire.
+|Parametre-des-champs|      Les méthodes et propriétés des champs.
+|Export-MySQL|              Exporter les valeurs pour MySQL.
+|Plus-de-champ|             Créer de nouveau champ prédéfini.
+|Plus-de-decorateur|        Comment créer un décorateur compatible.
+|Remplacement-proprietes|   Valeurs de propriété automatique.
+
+===============================================================================
+EXEMPLE							              *Exemple*
+
+Ci-dessous un exemple simple de formulaire d'inscription : >
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('address')
+    ->country()
+    ->submit()
+    ->onValid('insert');
+
+HtmlForm utilise les interfaces fluides pour établir sa configuration ; ainsi,
+chaque méthode retourne l'objet lui même, cela permet d'appeler les méthodes
+les unes derrière les autres. Il est tout de même possible de se passer des
+interfaces fluides. Pour cela consultez la documentation de chaque paramètre
+de champ |Syntaxe-globale|.
+- La méthode 'text' ajoutera un champ de type 'text'.
+- La méthode 'country' ajoutera un champ de type 'select'.
+- La méthode 'submit' ajoutera un bouton 'submit'.
+- La méthode 'onvalid' appelera la fonction 'insert' quand le formulaire sera
+  validé.
+
+Affichage d'un formulaire ~
+Le décorateur 'htmlout' est proposé par défault. Il parcours la liste des
+champs du formulaire pour les afficher en HTML avec une serie de balise DIV.
+Il y en a suffisament pour couvrir bon nombre de besoin en CSS.
+- Voir |Decorateur| -
+
+A partir de l'exemple précedant : >
+
+  HtmlOut::display( $form );
+
+Construira le HTML suivant : >
+
+  <FORM NAME="subscribe"  METHOD="post" >
+    <DIV CLASS="element elementtext name " >
+      <DIV CLASS="label" >
+        <LABEL FOR="b068" >Name</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <INPUT ID="b068"  TYPE="text"  NAME="name"  ID="b068" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementtext address " >
+      <DIV CLASS="label" >
+        <LABEL FOR="884d" >Address</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <INPUT ID="884d"  TYPE="text"  NAME="address"  ID="884d" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementselect Country " >
+      <DIV CLASS="label" >
+        <LABEL FOR="8923" >Country</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <SELECT NAME="Country"  ID="8923" >
+          <OPTION>-- Select a country --</OPTION>
+          <OPTION VALUE="AF"  ID="89231" >Afghanistan</OPTION>
+	  ...
+	  ...
+          <OPTION VALUE="ZW"  ID="8923242" >Zimbabwe</OPTION>
+          <OPTION VALUE="--"  ID="8923243" >-- Other --</OPTION>
+        </SELECT>
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementbutton subscribe " >
+      <DIV CLASS="field" >
+        <INPUT TYPE="submit"  NAME="subscribe"  VALUE="Submit" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+  </FORM>
+
+Valider un formulaire ~
+HtmlForm effectue automatiquement des vérifications sur les valeurs envoyés
+par le client, en plus des vérifications ajouté manuellement. Une fois le
+formulaire valide, une fonction de callback est appelé pour effectuer les
+traitements d'enregistrement dans une base de donnée par exemple.
+
+A partir de l'exemple de formulaire d'inscription précédant : >
+
+  function insert( HtmlForm $form )
+  {
+    echo 'formulaire validé';
+    exit;
+  }
+
+Cette fonction utilisateur recevra en paramètre l'object du formulaire sur
+lequel il est facile de récupérer les informations envoyé par le client. Voir
+le chapitre |Export-MySQL| pour construire automatiquement des requêtes SQL.
+
+===============================================================================
+SYNTAXE                                                       *Syntaxe-globale*
+
+Des méthodes pour la configuration ~
+La classe 'htmlform' dispose d'une série de méthodes qui permettent d'effectuer
+trois opérations :
+- ajouter un champ,
+- modifier un des paramètres du dernier champ ajouté,
+- modifier un paramètre du formulaire.
+
+Ainsi, la méthode 'text' ajoutera un champ 'input' de type 'text' au
+formulaire, tandis que 'label' permettra de modifier le label du champ 'text'
+fraîchement ajouté. >
+
+  $form->HtmlForm::hie('subscribe')
+    ->text('name')->label('Nom et prénom');
+
+L'exemple ci-dessus créera un formulaire nommé 'subscribe' et lui ajoutera un
+champ de saisie nommé 'name' avec son label "Nom et prénom".
+
+Concernant les méthodes de création de nouveau champ, consulter le chapitre :
+|Type-de-champ|	            Les types de champs disponibles de base.
+
+Concernant les méthodes de paramètrage des champs :
+|Nom-de-champ|              Modifier le nom du champ.
+|Label-de-champ|	    Modifier le label d'un champ.
+|Champ-obligatoire|	    Rendre un champ obligatoire.
+|Verification-des-valeurs|  Ajouter des tests sur les valeurs.
+|Message-d-alerte|          Définir les messages d'erreurs liées aux champs.
+|Nom-exportable|            La correspondance du nom du champ pour SQL.
+|Valeurs-predefinies|       Ajoute ou modifie les valeurs prédéfinies.
+|Table-de-traduction|       Choisir une table de traduction.
+|Valeur-par-defaut|         Ajoute une valeur par défaut.
+|Champ-cache|               Permet de masquer le champ.
+
+Concernant les méthodes de paramètrage du formulaire :
+|Parametre-du-formulaire|   Les méthodes de configuration du formulaire.
+
+Création d'un formulaire ~
+Pour créer un nouveau formulaire, il faut appeler la méthode statique 'hie' et
+lui passer le nom du formulaire en paramètre. >
+
+  $form = HtmlForm::hie('subscribe');
+
+GET ou POST ~
+Par défaut, HtmlForm défini les formulaires comme étant envoyé en POST, pour
+spécifier un comportement particulier, utilisez les membres 'get' et 'post'. >
+
+  $form = HtmlForm::hie('subscribe')->setGet();
+
+  $form = HtmlForm::hie('subscribe')->setPost();
+
+Ou vous pouvez utiliser les deux méthodes 'setget' et 'setpost'. >
+
+  $form = HtmlForm::hie('subscribe')->setGet();
+
+  $form = HtmlForm::hie('subscribe')->setPost();
+
+Selection d'un champ ~
+En utilisant les interfaces fluides, lors de la configuration d'un champ,
+celui-ci reste actif jusqu'à ce qu'un autre champ soit ajouté. Pour revenir au
+champ précédent, utilisez la méthode 'selectelement'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')		      // Ajoute un champ pseudo
+    ->text('name')                    // Ajoute un champ name
+    ->selectElement('pseudo')         // Re-selectionne le champ pseudo
+      ->label('Ton pseudo');          // Modifie le label du champ pseudo
+
+Accéder à un champ ~
+Pour récupérer une référence d'une instance d'un champ, utilisez objet
+'htmlform' comme un tableau. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name');
+
+  $field = $form['name'];    // $field est un objet HtmlFormElement
+
+Accèder à la valeur client ~
+La valeur envoyée par le client est stockée dans les propriétés 'value' ou
+'html' de chaque instance de champ. >
+
+  $form = HtmlForm('subscribe')
+    ->text('pseudo');
+
+  echo $form['pseudo']->value;    // affichera la valeur de $_POST['pseudo']
+  echo $form['pseudo']->html;     // affichera la valeur de manière protégée
+
+- Voir |Valeur-client| -
+
+Parcourir les éléments ~
+Pour parcourir tous les éléments d'un formulaire, utilisez l'instruction
+'foreach' sur l'instance du formulaire. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('address');
+
+  foreach( $form as $field )
+    echo $field->name;          // affichera : "nameaddress"
+
+===============================================================================
+NOM                                                              *Nom-de-champ*
+
+Le nom des champs correspond à la valeur de l'attribut HTML 'name' de chaque
+balise <input>, <button>, <select> ou <textarea>.
+
+Il est conseillé de spécifier le nom du champ à sa création. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('first name');
+
+Néamoins il est possible de le modifier par la suite de plusieurs manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('address')
+    ->text('city');
+
+  $form['name']->name = 'newName';
+
+  $form['city']->setName('newName');
+
+  $form->selectElement('address')->setName('newAddress');
+
+IMPORTANT ! ~
+Changer le nom d'un champ modifie uniquement la valeur de l'attribut HTML
+'name' et pas la clef utilisée par l'application. Ainsi, si vous voulez
+re-accédez au champ 'name' vous ne pourrez pas le faire avec la clef
+'newname'. >
+
+  $form['name']->name = 'newName';
+  $form['newName'];                  // OutOfBoundsException lancé.
+
+===============================================================================
+LABEL                                                          *Label-de-champ*
+
+Plusieurs champs spécifiques possèdent un label en anglais par défaut. Les
+champs génériques comme 'text', 'select', 'button' et 'area' n'en possède pas.
+HtmlForm leur attribuera alors leur propre nom avec une majuscule. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('le-nom');       // Le champ aura pour label : "Le-nom"
+
+Pour spécifier le label d'un champ, utilisez la méthode 'label' après avoir
+ajouté un champ. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')->label('Nom et prénom');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name');
+
+  $form['name']->label = 'Nom et prénom';
+
+  $form['name']->setLabel('Nom et prénom');
+
+  $form->selectElement('name')->setLabel('Nom et prénom');
+
+Pas de label ~
+Pour que le décorateur n'affiche pas de label, passez la valeur 'false' à la
+méthode 'label'.
+
+===============================================================================
+OBLIGATOIRE                                                 *Champ-obligatoire*
+
+Rendre un champ obligatoire empêchera au formulaire d'être validé si ce champ
+n'est pas rempli.
+
+Pour rendre un champ obligatoire, utilisez la méthode 'required'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')->required();
+
+Par défaut, si le champ n'est pas rempli un message d'erreur en anglais est
+utilisé. Pour spécifier le message, passez une chaîne de caractère en paramètre
+à la méthode 'required'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')->required('Ce champ est obligatoire');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name');
+
+  $form['name']->required = 'Ce champ est obligatoire';
+
+  $form['name']->setRequired('Ce champ est obligatoire');
+
+  $form->selectElement('name')->setRequired('Ce champ est obligatoire');
+
+===============================================================================
+VERIFICATION                                         *Verification-des-valeurs*
+
+Pour vérifier les valeurs des champs, il y a deux grandes façons cumulables de
+faire :
+- en utilisant des expressions rationnelles,
+- en utilisant des fonctions de 'callback'.
+
+Expressions rationnelles ~
+Pour ajouter une vérification par expression, utilisez la méthode 'check' en
+lui passant une expression en paramètre. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')->check('/^\w{3,24}$/');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo');
+
+  $form['pseudo']->check = '/^\w{3,24}$/';
+
+  $form['pseudo']->setCheck('/^\w{3,24}$/');
+
+  $form->selectElement('pseudo')->setCheck('/^\w{3,24}$/');
+
+Fonction de callback ~
+Pour ajouter une vérification par fonction, utilisez la méthode 'check' en
+lui passant le nom d'une fonction en paramètre. >
+
+  fucntion address( HtmlFormElement $field, HtmlForm $form )
+  {
+    if( $field->value == '102 missile fixe' )
+      return true;
+  }
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('address')->check('address');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo');
+
+  $form['pseudo']->check = 'address';
+
+  $form['pseudo']->setCheck('address');
+
+  $form->selectElement('pseudo')->setCheck('address');
+
+La fonction de callback prend deux paramètres :
+- un objet 'htmlformelement' qui est le champ en cours de validation,
+- et un objet 'htmlform' qui est le formulaire qui contient tous les champs.
+
+Plusieurs vérification ~
+La méthode 'check' prend un nombre infini de paramètres, vous pouvez donc
+définir plusieurs tests avec le même appel à la méthode.
+
+Première vérification ~
+Si le paramètre qui suit le nom de la fonction à ajouter est 'true', alors la
+fonction sera ajoutée au début de la liste. >
+
+  $form['pseudo']->setCheck('address',true);
+
+Cette façon de faire n'est pas conseillée, sauf si vous souhaitez effectuer des
+traitements sur la valeur envoyée par le client.
+
+Méthode ~
+Si la fonction de vérification est une méthode, il faut utiliser un tableau à
+deux entrées.
+
+Si la méthode est statique : >
+
+  $form['pseudo']->check = array('MyClass','MyCheck');
+
+Si la méthode n'est pas statique : >
+
+  $MyObject = new MyClass;
+
+  $form['pseudo']->check = array($MyObject,'MyCheck');
+
+===============================================================================
+MESSAGE                                                      *Message-d-alerte*
+
+Si un champ n'a pas passé la phase de vérification, un message peut être
+affiché pour alerter l'utilisateur. Utilisez la méthode 'alert'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')
+      ->check('/^\w{3,24}$/')
+      ->alert('Entre 3 et 24 lettres et chiffres uniquement');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')->check('/^\w{3,24}$/');
+
+  $form['pseudo']->alert = 'Entre 3 et 24 lettres et chiffres uniquement';
+
+  $form['pseudo']->setAlert('Entre 3 et 24 lettres et chiffres uniquement');
+
+  $form->selectElement('pseudo')->setAlert('Entre 3 et 24 lettres et chiffres uniquement');
+
+Messages multiples ~
+Si une fonction de 'callback' est utilisée pour la vérification du champ
+- voir |Verification-des-valeurs| - il est possible d'avoir plusieurs messages
+d'erreur. La fonction de 'callback' retournera le choix du message à
+afficher. >
+
+  function verif_pays( HtmlFormElement $field, HtmlForm $form )
+  {
+    if( $field->value == 'FR' )
+      return 'pas_france';
+  }
+
+  $form = HtmlForm::hie('subscribe')
+    ->country('pays')
+      ->check('verif_pays')
+      ->alert( array(
+	'pas_france' => 'Vous ne pouvez pas choisir la france' ) );
+
+La fonction doit renvoyer soit un entier, soit une chaîne de caractère, soit
+une valeur booléenne.
+
+Dans ce cas, le paramètre passé à la méthode 'alert' doit être un tableau
+associatif. Les clefs doivent correspondre aux valeurs retournées par la
+fonction de vérification.
+
+===============================================================================
+SQL               					       *Nom-exportable*
+
+Lors de l'export en requête SQL - voir |Export-MySQL| - un nom de substitution
+est utilisé, par défaut, il est identique au nom du champ. Pour le modifier,
+utilisez la méthode 'map'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')->map('use_name');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo');
+
+  $form['pseudo']->map('use_name');
+
+  $form['pseudo']->setMap('use_name');
+
+  $form->selectElement('pseudo')->setMap('use_name');
+
+===============================================================================
+LISTE DE VALEURS                                          *Valeurs-predefinies*
+
+Les champs de type 'select', 'radio' et 'checkboxs' contiennent une liste de
+valeurs prédéfinies que l'utilisateur doit choisir. Pour modifier cette liste
+de valeurs, utiliser la méthode 'values' avec un 'array' en paramètre >
+
+  $form = HtmlForm::hie('subscribe')
+    ->radio('genre')->values(array(
+      'G'=>'Girl',
+      'B'=>'Boy'));
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('genre');
+
+  $form['genre']->values(array('G'=>'Girl','B'=>'Boy'));
+
+  $form['genre']->setValues(array('G'=>'Girl','B'=>'Boy'));
+
+  $form->selectElement('genre')->setValues(array('G'=>'Girl','B'=>'Boy'));
+
+Le nom des clefs du tableau seront utilisé comme valeur du champ récupérable
+avec les propréiétés 'value' et 'html'. - voir |Syntaxe-globale| -
+
+Ajouter et non remplacer ~
+Pour ajouter des éléments dans la liste sans remplacer cette dernière, il
+suffit de passer une ou plusieurs chaînes de caractères à la méthode
+'values'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->radio('civilite')->values('monsieur','madame')->values('mademoiselle');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('civilite');
+
+  $form['civilite']->values = 'monsieur';
+  $form['civilite']->values = 'madame';
+  $form['civilite']->values = 'mademoiselle';
+
+  $form['civilite']->setValues('monsieur','madame')->setValues('mademoiselle');
+
+  $form->selectElement('civilite')->setValues('monsieur','madame');
+  $form->selectElement('civilite')->values = 'mademoiselle';
+
+Dans ce cas, les clefs utilisées seront des nombres incrémentals débutant à
+partir de 1.
+
+===============================================================================
+TRADUCTION                                                *Table-de-traduction*
+
+Pour les champs de type 'select' utilisant des valeurs prédéfinies, il est
+possible d'y joindre une table de traduction en utilisant la méthode 'i18n'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->country()->i18n('french');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->country();
+
+  $form['country']->i18n = 'french';
+
+  $form['country']->setI8n('french');
+
+  $form->selectElement('country')->setI8n('french');
+
+Cet exemple traduira tous les noms des pays du champ 'country' en français.
+
+===============================================================================
+DEFAUT                                                      *Valeur-par-defaut*
+
+Si le client ne fournit pas de valeur pour un champ, il est possible de
+spécifier une valeur par défaut pour celui-çi. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')->default('Ton pseudo');
+
+Ou utilisez l'une des autres manières. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo');
+
+  $form['pseudo']->default = 'Ton pseudo';
+
+  $form['pseudo']->setDefault('Ton pseudo');
+
+  $form->selectElement('pseudo')->setDefault('Ton pseudo');
+
+===============================================================================
+VALEUR CLIENT                                                   *Valeur-client*
+
+Les valeurs envoyés par le client sont facilement récupérable grâce aux deux
+propriétés 'value' et 'html' de chaque champs du formulaire. >
+
+  echo $form['pseudo']->value;    // affichera la valeur de $_POST['pseudo']
+  echo $form['pseudo']->html;     // affichera la valeur de manière protégée
+
+La propriété 'html' protège les données contre certaines attaque javascript.
+Elle est utiliser pour être ajouter dans les attributs "value" des champs
+HTML. - voir |Plus-de-decorateur| -
+
+===============================================================================
+CHAMP CACHE                                                       *Champ-cache*
+
+Bientôt ...
+
+===============================================================================
+VALIDATION                                                  *Formulaire-valide*
+
+Le processus de validation est automatiquement lancé si le formulaire est affiché
+avec le classe 'htmlout' - voir |Decorateur| - sinon, il existe deux manières
+d'appeler la vérification est d'effectuer des opérations si cette dernière a
+réussi :
+- en utilisant la méthode 'isvalid',
+- en utilisant une fonction de 'callback'.
+
+isValid ~
+Dans un processus contrôlé par le développeur, l'appel à la méthode 'isvalid'
+lancera le processus de validation est retournera 'true' si ce denier à
+réussi, ou 'false' s’il a échoué. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('address')
+    ->submit();
+
+  if( isValid() )
+  {
+    // mes instructions
+  }
+
+Information ~
+La méthode 'isvalid' met en cache le résultat de la validation, il n'est donc
+pas possible de vérifier deux fois le formulaire.
+
+callback ~
+Pour définir une fonction de 'callback' qui sera appelé si la validation a
+réussi, utilisez la méthode 'onvalid', puis 'dovalid' pour lancer le processus
+de validation et d'exécution de la fonction de 'callback'. >
+
+  function enregistre( HtmlForm $form )
+  {
+    // mes instructions
+  }
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')
+    ->submit()
+    ->onValid('enregistre')
+    ->doValid();
+
+IMPORTANT ! ~
+Il n'est pas possible de valider un formulaire sans bouton 'submit'.
+
+===============================================================================
+MULTI PAGES                                                       *Multi-Pages*
+
+
+===============================================================================
+TYPES                                                           *Type-de-champ*
+
+Ci-dessous une liste des champs disponibles de base :
+- |text| : un champ de texte libre,
+- |email| : un champ de saisi pour une adresse mél,
+- |dropdown| : une boîte déroulante,
+- |button| : un bouton,
+- |radio| : une liste de bouton radio,
+- |checkbox| : une case a cocher,
+- |checkboxs| : une liste de case a cocher,
+- |subscribe| : une case à coché relié à une adresse mél.
+
+Et voici la liste des champs end-user.
+- |country| : une boîte déroulante avec une liste de pays,
+- |submit| : un bouton pour envoyer le forumaire.
+- |day|
+- |month|
+- |year|
+- |yeardown|
+- |subsbribe|
+
+===============================================================================
+TEXTE                                                                    *text*
+
+Représente un champ de saisie libre correspondant à la syntaxe HTML: >
+
+  <input type="text" name="monChamp" />
+
+Pour ajouter un champ de saisie à votre formulaire, utilisez la méthode 'text'
+en lui passant le nom du champ en paramètre. >
+
+  $form = HtmlForm::hie('exemple')
+    ->text('monChamp');
+
+Ou utilisez la syntaxe suivante : >
+
+  $form = HtmlForm::hie('exemple');
+  $form->appendElement( HtmlFormText::hie($form,'monChamp') );
+
+Les propriétés modifiables pour ce champ sont : |Nom-de-champ|,
+|Label-de-champ|, |Champ-obligatoire|, |Verification-des-valeurs|,
+|Message-d-alerte|, |Nom-exportable| et |Valeur-par-defaut|.
+
+===============================================================================
+EMAIL                                                                   *email*
+
+Représente un champ de saisie pour une adresse mél. Le champ 'email' se
+présente comme un champ |text| hormis le fait qu'une vérification est effectuée
+sur la valeur entrée par le client pour vérifier s’il s'agit bien d'une
+adresse mél.
+
+Pour ajouter un champ mél à votre formulaire utilisez la méthode 'email'. >
+
+  $form = HtmlForm::hie('exemple')
+    ->email();
+
+Ou utilisez la syntaxe suivante : >
+
+  $form = HtmlForm::hie('exemple');
+  $form->appendElement( HtmlFormEmail::hie($form) );
+
+Les propriétés modifiables pour ce champ sont : |Nom-de-champ|,
+|Label-de-champ|, |Champ-obligatoire|, |Verification-des-valeurs|,
+|Message-d-alerte|, |Nom-exportable| et |Valeur-par-defaut|.
+
+===============================================================================
+DROPDOWN                                                             *dropdown*
+
+Bientôt...
+
+===============================================================================
+PAYS                                                                  *country*
+
+Bientôt...
+
+===============================================================================
+BUTTON                                                                 *button*
+
+Bientôt...
+
+===============================================================================
+SUBMIT                                                                 *submit*
+
+Bientôt...
+
+===============================================================================
+RADIO                                                                   *radio*
+
+Bientôt...
+
+===============================================================================
+CHECKBOX                                                             *checkbox*
+
+Bientôt...
+
+===============================================================================
+CHECKBOXS                                                           *checkboxs*
+
+Bientôt...
+
+===============================================================================
+SUBSCRIBE                                                           *subscribe*
+
+Bientôt...
+
+===============================================================================
+DECORATEUR                                                         *Decorateur*
+
+HtmlForm propose un décorateur de base nommé 'htmlout'. Cette classe dispose
+de deux méthodes statiques pour retourner 'fetch' ou envoyer 'display' le
+formulaire généré en HTML. >
+
+  function verif( HtmlForm $form )
+  {
+    // mes instructions
+  }
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('addresse')
+    ->onValid('verif');
+
+  HtmlOut::display( $form );
+
+'htmlout' s'occupe de lancer la vérification du formulaire avant de
+l'afficher.
+
+===============================================================================
+SMARTY                                                                 *Smarty*
+
+Pour utiliser afficher un formulaire dans 'Smarty ' il suffit de lui
+transmettre une référence de l'objet et d'utiliser la balise 'foreach'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo');
+
+  $smarty = new Smarty;
+  $smarty->assign('form', $form);
+
+  ----
+
+  <form name="{$form.name}" method="{$form.method}"
+  {foreach item="field" from=$form}
+
+    {if $field.class eq 'HtmlFormText'}
+      <input type="text" name="{$field.name" value="{$field.html}" />
+      {if $field.error}
+	{$field.error}
+      {/if}
+    {/if}
+
+  {/foreach}
+  </form>
+
+Astuces ~
+La propriété 'html' de la classe 'htmlformelement' renvoie la valeur envoyée
+par le client protégée par la fonction PHP 'htmlspecialchars'.
+
+Les classes filles de 'htmlformselect' implémentent l'interface 'iterator' de la
+bibliothèque SPL de PHP, il donc possible d'exécuter l'instruction 'foreach' sur
+l'instance de ces classes.
+
+===============================================================================
+FORMULAIRE                                            *Parametre-du-formulaire*
+
+La classe formulaire 'htmlform' une fois instanciée dispose de plusieurs
+propriétés modifiables :
+- 'name' : la valeur de l'attribut 'name' de la balise HTML 'form'.
+- 'method' : la valeur de l'attribut 'method' de la balise HTML 'form'.
+
+... ainsi que des méthodes :
+- 'setget', 'setpost' : indique d'envoyer les données du formulaire en GET ou
+  en POST,
+- 'userequest' : indique que les valeurs client doivent être récupérer à
+  partir de la super globals $_REQUEST plutot que $_GET ou $_POST,
+- 'appendelement' : ajoute une instance de 'htmlformelement' dans le
+  formulaire,
+- 'selectelement' : sélectionne un champ déjà ajouté en temps que champ
+  courant,
+- 'onvalid' : permet d'ajouter une fonction de 'callback' qui sera exécuté si
+  le formulaire est validé,
+- 'dovalid' : lance la validation et exécute la fonction de 'callback' si le
+  formulaire est validé,
+- 'isvalid' : lance la validation et retourne le résultat,
+- 'mysqlset' : retourne une portion de requête pour une instruction SQL 'set',
+- 'mysqlvalues' : retourne une portion de requête pour une instruction SQL
+  'values',
+- 'mysqlduplicatevalues' : retourne une portion de requête pour les
+  instructions SQL 'duplicate' plus 'update'.
+
+===============================================================================
+CHAMPS                                                   *Parametre-des-champs*
+
+Les classes dérivées de 'htmlformelement' une fois instanciée disposent de
+plusieurs propriétés modifiables :
+- 'name' : la valeur de l'attribut 'name' de la balise correspondante,
+- 'required' : le message d'erreur si le champ est manquant,
+- 'check' : la liste des vérifications que la valeur du champ doit passer,
+- 'map' : la correspondance SQL du nom du champ,
+- 'label' : le label du champ,
+- 'alert' : le message ou la liste des messages d'alerte en cas d'erreur,
+- 'id' : un champ unique - invariable si le champ possède un nom -,
+- 'error' : l'état de validation du champ et son message d'erreur,
+- 'value' : la valeur envoyée par le client,
+- 'html' : la valeur envoyée par le client protégé,
+- 'class' : le nom de la classe du champ.
+
+... ainsi que des méthodes :
+- 'setname', 'setrequired', 'setcheck', 'setmap', 'setalert', 'setid' :
+  permettent de modifier les propriétés correspondantes.
+
+===============================================================================
+MYSQL                                                            *Export-MySQL*
+
+En plus de gérer les entrées/sorties d'un formulaire HtmlForm propose de
+rédiger les portions de requête 'mysql' souvent laborieuse avec une grande
+quantité de champs. >
+
+  http://mon.domaine/form.php?name=Martin&address=102+missile+fixe
+
+  ----
+
+  $form = HtmlForm::hie('subscribe')->setGet()
+    ->text('name')
+    ->text('address');
+
+  echo $form->mysqlSet();
+  // affichera : SET `name`='Martin', `address`='102 missile fixe'
+
+Les méthodes disponibles sont les suivantes :
+- 'mysqlset' : à utiliser avec l'instruction 'set' de 'insert', 'replace'
+  ou 'update',
+- 'mysqlvalues' : à utiliser avec l'instruction 'values' de 'insert', 'replace'
+  ou 'update',
+- 'mysqlduplicatevalues' : à utiliser après l'instruction :
+  ON DUPLICATE KEY UPDATE.
+
+Ces trois paramètres prennent un paramètre optionnel qui servira pour
+l'échappement des caractères. Il peut être :
+- une ressource 'mysql',
+- une instance de 'mysqli',
+- une instance d'un objet possédant une méthode 'escape'.
+
+Si ce paramètre n'est pas fourni, HtmlForm cherchera à ouvrir une connexion
+avec le serveur MYSQL.
+
+Si l'échappement n'a pas pu être effectué, les méthodes retourneront 'false'.
+
+===============================================================================
+AUTRES CHAMPS                                                    *Plus-de-champ*
+
+Pour créer de nouveau champ spécifique, il suffit d'étendre l'une des classes
+suivantes :
+- 'htmlformtext' : champ de saisie de type <input>,
+- 'htmlformdropdown' : liste déroulante de type <select>,
+- 'htmlformradio' : liste de champ de type <input> 'radio',
+- 'htmlformcheckbox' : case a cocher de type <input> 'checkbox',
+- 'htmlformcheckboxs' : liste de case a cocher de type <input> 'checkbox',
+- 'htmlformbutton' : bouton de type <button>,
+- 'htmlformsubmit' : bouton de type <input> 'submit'. >
+
+  class MySelect extends HtmlFormSelect
+  {
+    protected $name = 'MySelect';
+
+    protected function init( HtmlForm $form )
+    {
+      parent::init( $form );
+
+      // mes instructions
+    }
+  }
+
+ATTENTION ! ~
+Dans la méthode 'init' utilisez les méthodes 'setxxx' pour modifier les
+propriétés. >
+
+Regardez le code de 'htmlformcountry' pour un exemple concret.
+
+===============================================================================
+AUTRE DECORATEURS                                          *Plus-de-decorateur*
+
+Pour créer de nouveau décorateur, il suffit d'implémenter l'interface
+'htmloutinterface' qui déclare deux méthodes :
+- 'fetch' : retourne le code HTML du formulaire,
+- 'display' : affiche le code HTML du formulaire. >
+
+  class MyDecorator implements HtmlOutInterface
+  {
+    public function display( HtmlForm $form )
+    {
+      // mes instructions
+    }
+
+    public function fetch( HtmlForm $form )
+    {
+      // mes instructions
+    }
+  }
+
+===============================================================================
+PROPRIETE AUTOMATIQUE                                 *Remplacement-proprietes*
+
+Bientôt ...
+
+-------------------------------------------------------------------------------
+vim:tw=78:noet:wrap:ts=8:ft=help:norl:

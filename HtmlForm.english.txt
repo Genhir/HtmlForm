@@ -1,0 +1,290 @@
+*HtmlForm.english.vim.txt*	                                   HtmlForm 1.0
+
+HtmlForm - mini PHP5.1 framework for HTML form.
+
+It allows to automate repetitives operations about HTML forms like:
+- display the fields of a form,
+- recovery of users sended values,
+- display of error messages.
+
+And also offer developpers tools like:
+- write tests for field's values,
+- protect of users sended values and default values,
+- create portion of SQL request,
+- extendable fields,
+- allow to use template engine.
+
+|Example|		    A simple example for start.
+|Global-syntax|	            Syntax explanation and demonstration.
+
+|Field-name|		    Change the field's name.
+|Field-label|		    Change the field's label.
+|Compulsory-field|	    Set a field to be compulsory.
+|Check-of-values|	    Add test on the users sended values.
+|Alert-messages|	    Set the error message linked to fields.
+|Exportable-name|	    Change the SQL name.
+|Predefined-values|	    Add or change the predefined values.
+|Translated-table|	    Choose a translated table.
+|Default-value|		    Add a default value.
+|Hidden-field|		    Allow to hide the fields.
+|Client-value|              The value sent by the client.
+
+|Form-is-valid|		    Process achieves when the form become valid.
+|Multi-pages|		    One form with multiple pages.
+
+|Types-of-field|	    The list of available field type.
+
+|Decorator|		    Displaying a form.
+|Smarty|		    Use Smarty to display the form.
+
+|Form-properties|	    Methods and members of the form object.
+|Field-properties|	    Methods and members of all elements objects.
+|Mysql-export|		    Export the values for SQL request.
+|More-field|		    Create custom field.
+|More-decorator|	    Create custom decorator.
+|Properties-replacement|    Automatic properties values.
+
+===============================================================================
+EXAMPLE							              *Example*
+
+Under, a simple example of a subscribe form: >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('address')
+    ->country()
+    ->submit()
+    ->onValid('insert');
+
+HtmlForm uses Fluent Interface
+http://martinfowler.com/bliki/FluentInterface.html to build its configuration;
+this means, all methods return the object itself. That permit to call methods
+one after the other. It also possible to use a standart syntax. See
+documentation about all field properties |Global-syntax|.
+
+- The 'text' method will add a field of type 'text'.
+- The 'country' method will add a field of type 'select'.
+- The 'submit' method will add a button of type 'submit'.
+- The 'onvalid' method will call the function "insert" when the form becomes
+  valid.
+
+Displaying a form ~
+The decorator 'htmlout' is suggested by by default. It browse the list of
+fields and display it with HTML and a significative number of DIV element,
+enough for satisfy the needs in CSS.
+
+From the previous example: >
+
+  HtmlOut::display( $form );
+
+Will build and display the HTML code: >
+
+  <FORM NAME="subscribe"  METHOD="post">
+    <DIV CLASS="element elementtext name " >
+      <DIV CLASS="label" >
+        <LABEL FOR="b068" >Name</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <INPUT ID="b068"  TYPE="text"  NAME="name"  ID="b068" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementtext address " >
+      <DIV CLASS="label" >
+        <LABEL FOR="884d" >Address</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <INPUT ID="884d"  TYPE="text"  NAME="address"  ID="884d" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementselect Country " >
+      <DIV CLASS="label" >
+        <LABEL FOR="8923" >Country</LABEL>
+      </DIV>
+      <DIV CLASS="field" >
+        <SELECT NAME="Country"  ID="8923" >
+          <OPTION>-- Select a country --</OPTION>
+          <OPTION VALUE="AF"  ID="89231" >Afghanistan</OPTION>
+	  ...
+	  ...
+          <OPTION VALUE="ZW"  ID="8923242" >Zimbabwe</OPTION>
+          <OPTION VALUE="--"  ID="8923243" >-- Other --</OPTION>
+        </SELECT>
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+    <DIV CLASS="element elementbutton subscribe " >
+      <DIV CLASS="field" >
+        <INPUT TYPE="submit"  NAME="subscribe"  VALUE="Submit" >
+      </DIV>
+      <DIV CLASS="alert" >
+        <P></P>
+      </DIV>
+    </DIV>
+  </FORM>
+
+Check a form ~
+HtmlForm do automatic checks on the users sended values, in addition to the
+checks added manually. Once the form is valid, a callback function is called
+to carry out the processing: recording in a database for example.
+
+From the previous example of a subscribe example: >
+
+  function insert( HtmlForm $form )
+  {
+    echo 'The form is valid!';
+    exit;
+  }
+
+This user function will receive in parameter the form object on which it's
+easy to recover the values sent by the user. See |Mysql-export| for build
+automated SQL request.
+
+===============================================================================
+SYNTAX                                                          *Global-syntax*
+
+Some methods for configuration ~
+The class 'htmlform' lay out a series of methodes which allow to carry out
+three operations :
+- adding a field to the form,
+- change properties of the last added field,
+- change properties of the form.
+
+So, the method 'text' will add un field INPUT of type TEXT to the form, while
+the method 'label' will permit to modify the label of the field 'text' coldly
+added. >
+
+  $form->HtmlForm::hie('subscribe')
+    ->text('name')->label('Firstname & lastname');
+
+The example above will create a form named 'subscribe' and a text field will
+add to him named 'name' with its label "Firstname & lastname".
+
+Concerning methods about fields creations, consult the chapter:
+|Types-of-field|	    The list of available field type.
+
+Concerning methods about parameter setting of the fields:
+|Field-name|		    Change the field's name.
+|Field-label|		    Change the field's label.
+|Compulsory-field|	    Set a field to be compulsory.
+|Check-of-values|	    Add test on the users sended values.
+|Alert-messages|	    Set the error message linked to fields.
+|Exportable-name|	    Change the SQL name.
+|Predefined-values|	    Add or change the predefined values.
+|Translated-table|	    Choose a translated table.
+|Default-value|		    Add a default value.
+|Hidden-field|		    Allow to hide the fields.
+
+Concerning methods about parameter setting of the form:
+|Form-properties|	    Methods and members of the form object.
+
+Form creation ~
+To create a new form, it's necessary to call the static method 'hie' and to
+pass it the name of the form. >
+
+  $form = HtmlForm::hie('subscribe');
+
+GET or POST ~
+By default, HtmlForm define the forms as being sent in POST, to specify a
+particular behavior, use the members 'get' and 'post'. >
+
+  $form = HtmlForm::hie('subscribe')->get;
+
+  $form = HtmlForm::hie('subscribe')->post;
+
+Or you can use the two methods 'setget' and 'setpost'. >
+
+  $form = HtmlForm::hie('subscribe')->setGet();
+
+  $form = HtmlForm::hie('subscribe')->setPost();
+
+Field selecting ~
+When using the fluent interface add configuring a field, this one stay
+activated until an other field is added. To return back to a previous field,
+use the method 'selectelement'. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('pseudo')		      // Add a field: pseudo
+    ->text('name')                    // Add a field: name
+    ->selectElement('pseudo')         // Re-activate the field: pseudo
+      ->label('Ton pseudo');          // Change the label of the field: pseudo
+
+Acces to a field ~
+To recover a instance reference of a field, use the object 'htmlform' like an
+array. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name');
+
+  $field = $form['name'];    // $field is a HtmlFormElement object
+
+Acces to the client value ~
+The value sent by the client is stocked in the properties 'value' ot 'html' of
+each field instance. >
+
+  $form = HtmlForm('subscribe')
+    ->text('pseudo');
+
+  echo $form['pseudo']->value;    // display the value of $_POST['pseudo']
+  echo $form['pseudo']->html;     // display the value in a secure way
+
+- See |Client-value| -
+
+
+
+
+
+
+
+
+
+
+
+Parcourir les éléments ~
+Pour parcourir tous les éléments d'un formulaire, utilisez l'instruction
+'foreach' sur l'instance du formulaire. >
+
+  $form = HtmlForm::hie('subscribe')
+    ->text('name')
+    ->text('address');
+
+  foreach( $form as $field )
+    echo $field->name;          // affichera : "nameaddress"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+...translation in progress...
+...translation in progress...
+...translation in progress...
+...translation in progress...
+...translation in progress...
+...translation in progress...
+...translation in progress...
+
+
+-------------------------------------------------------------------------------
+vim:tw=78:noet:wrap:ts=8:ft=help:norl:
